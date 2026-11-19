@@ -1,23 +1,50 @@
 # FedPredict
 
-**Explore U.S. airline delay patterns and try a privacy-aware federated-learning demo.**
+A public-facing exploration app for the supplied BTS Airline Delay Cause data, with an instant historical cohort estimate and an interactive federated averaging demonstration.
 
-FedPredict is a self-contained browser app built from the project’s BTS Airline Delay Cause dataset. It can be hosted as a static GitHub Pages site and opened directly from `index.html`.
+## Start locally
 
-## Open the app
+Requires Node.js 20 or newer. No packages are needed.
 
-Open `index.html` in a browser, or enable GitHub Pages for this repository (Settings → Pages → Deploy from a branch → `main` / `/(root)`). The app has no build step or package installation.
+On Windows, double-click `Start FedPredict.bat` and keep its window open while you use the app. The server prints the exact local address it chose.
 
-## What’s included
+For the simplest launch, open `FedPredict.html` directly in Edge or Chrome. This single-file version bundles the historical summaries and runs without Node or a server. Its demo model updates are saved in that browser when local storage is available.
 
-- Historical delay-rate trends and busy-airport comparisons.
-- Monthly historical delay estimates, optionally filtered by airline and airport.
-- An interactive sample-weighted FedAvg demonstration, with model JSON download and client update upload.
-- A self-contained page with the data summaries embedded; it does not require a server or expose the source CSV as a download.
+```powershell
+npm start
+```
 
-## Data and limitations
+Open `http://localhost:3000`. Set `PORT` to use a different port.
 
-The supplied workbook contains 98,578 monthly airline–airport records covering 2021–2025. Delay risk is based on arrivals delayed 15 minutes or more divided by arriving flights. Average arrival delay is total arrival delay divided by arriving flights.
+## What it does
 
-These are historical monthly estimates, not individual-flight predictions or a live flight feed. The federated section demonstrates averaging of summary statistics; it is not a trained LSTM–GCN model, secure aggregation, or differential privacy. Model changes are stored in the current browser when local storage is available.
+- Reads the supplied `FINAL DATA FOR PROJECT.xlsx`, converted to `data/flight_delay.csv` for a small, dependency-free Node server.
+- Shows dataset counts, a month-of-year delay rate, and high-volume airports.
+- Estimates historical delay probability for a selected month and optional airline/airport. Delay probability is based on arrivals delayed 15+ minutes divided by arriving flights. Average minutes is total arrival delay divided by arrivals.
+- Exposes a JSON prediction endpoint at `POST /api/predict` and dataset metadata at `GET /api/overview`.
+- Lets a demo client submit aggregate sample count, delay probability, and mean delay minutes. The server combines those values using sample-weighted averaging and serves the current snapshot at `GET /api/federated/model`.
+- Includes a `render.yaml` service blueprint and a sample client update JSON file.
+
+## Training the repository model
+
+The training script is [`train_model.py`](train_model.py). It trains a scikit-learn MLP regressor to estimate the delayed-arrival share (`arr_del15 / arr_flights`) from BTS monthly aggregate records. It holds out the latest year for evaluation and saves `artifacts/delay_rate_mlp.joblib` and `artifacts/metrics.json`.
+
+```powershell
+python -m pip install -r requirements.txt
+python train_model.py --data "path/to/FINAL DATA FOR PROJECT.xlsx"
+```
+
+This is a monthly cohort model, not a model for an individual flight or a live prediction feed. It is separate from the browser app's historical-rate estimate and federated averaging demo. The model artifact is generated locally and is ignored by Git.
+
+The Colab URL supplied for this project was view-only in this session and its notebook export was not available as a local file. The script above is the repository's runnable training code; it should not be treated as a verbatim copy of every Colab cell. The Colab also contains additional model experiments and app code that need their notebook and supporting files to be exported before they can be reproduced here.
+
+## Data and model limits
+
+The dataset has 98,578 monthly airline-airport records (2021–2025), not flight-level observations or a live feed. The estimate is retrospective and monthly; it cannot predict an individual flight or use current weather, ATC, aircraft rotation, or live status. The interactive federated step demonstrates weighted averaging of client summaries. It does not implement a trained LSTM-GCN, secure aggregation, differential privacy, or production client authentication. Demo model updates live in process memory and reset when the server restarts.
+
+The source dataset is the BTS Airline Delay Cause data supplied with the project. The app does not expose the CSV as a static download, and the raw workbook/CSV is not committed to this repository.
+
+## Deployment
+
+The project is a self-contained Node web service and can run on a Node hosting service. `PORT` is read from the environment. `render.yaml` defines a Render web service and health check; connect this repository to a Render account and deploy the blueprint to publish it. Public deployment still needs a hosting account and a destination controlled by the project owner.
 
