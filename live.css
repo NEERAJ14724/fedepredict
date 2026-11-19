@@ -1,0 +1,28 @@
+.live-data-section{padding-top:70px}
+.live-controls{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:14px}
+.live-controls label{font:600 10px var(--sans);color:#59667a}
+.live-controls select{height:35px;min-width:180px;border:1px solid #e0e4eb;border-radius:6px;padding:0 10px;background:#fff;color:var(--ink);font:10px var(--sans)}
+.live-controls #live-updated{margin-left:auto;color:#8792a1;font:9px var(--mono)}
+.live-api-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.live-api-card{min-width:0;padding:20px}
+.live-weather-result{min-height:166px;margin-top:19px}
+.weather-main{display:flex;align-items:center;gap:17px;padding:6px 0 18px}
+.weather-icon{display:grid;width:62px;height:62px;place-items:center;border-radius:15px;background:#f2f5ff;color:#5776ed;font-size:28px}
+.weather-temp{font:600 36px var(--display);letter-spacing:-.06em;color:#16253b}
+.weather-desc{margin-top:3px;color:#768295;font-size:10px}
+.weather-details{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.weather-detail{padding:10px;border-radius:6px;background:#f8f9fb}
+.weather-detail span{display:block;color:#909aa8;font:8px var(--mono);letter-spacing:.05em}
+.weather-detail b{display:block;margin-top:6px;color:#293950;font:600 12px var(--display)}
+.traffic-result{min-height:166px;margin-top:19px}
+.traffic-summary{margin:0 0 10px;color:#66748a;font-size:10px}
+.traffic-table-wrap{max-height:173px;overflow:auto;border:1px solid #edf0f4;border-radius:6px}
+.traffic-table{width:100%;border-collapse:collapse;text-align:left;font-size:9px}
+.traffic-table th{position:sticky;top:0;padding:8px;background:#f8f9fb;color:#8590a0;font:8px var(--mono);letter-spacing:.04em}
+.traffic-table td{padding:8px;border-top:1px solid #f0f2f5;color:#536176;white-space:nowrap}
+.traffic-table td:first-child{max-width:120px;overflow:hidden;text-overflow:ellipsis}
+.live-error{padding:16px;border-radius:7px;background:#fff8f5;color:#a45e49;font-size:10px;line-height:1.6}
+.live-credit{margin:12px 0 0;color:#9aa3af;font-size:8px;line-height:1.5}
+.live-credit a{color:#7187dc}
+@media(max-width:620px){.live-controls{flex-wrap:wrap}.live-controls select{flex:1;min-width:130px}.live-controls #live-updated{width:100%;margin:0}.live-api-grid{grid-template-columns:1fr}.live-api-card{padding:17px}.traffic-table th,.traffic-table td{padding:7px 5px}}
+
