@@ -36,7 +36,11 @@ python train_model.py --data "path/to/FINAL DATA FOR PROJECT.xlsx"
 
 This is a monthly cohort model, not a model for an individual flight or a live prediction feed. It is separate from the browser app's historical-rate estimate and federated averaging demo. The model artifact is generated locally and is ignored by Git.
 
-The Colab URL supplied for this project was view-only in this session and its notebook export was not available as a local file. The script above is the repository's runnable training code; it should not be treated as a verbatim copy of every Colab cell. The Colab also contains additional model experiments and app code that need their notebook and supporting files to be exported before they can be reproduced here.
+The Colab's original regression experiment is transcribed in [`notebooks/colab_regression_training.py`](notebooks/colab_regression_training.py). Run it with `python notebooks/colab_regression_training.py --data path/to/data.csv`. It trains nine regressors and saves `artifacts/best_flight_delay_r1_model.pkl`.
+
+That original experiment predicts `arr_delay` using `weather_delay`, `nas_delay`, `security_delay`, and `late_aircraft_delay`, which are components of the target. Its random row split also does not test future dates. The reported test R² near 0.984 is therefore leakage-inflated and should not be treated as real-world predictive performance. The cleaner `train_model.py` workflow above predicts monthly delay rate and holds out the latest year.
+
+The Colab itself contains many repeated experiments and app cells. A full `.ipynb` export was not saved locally, so this repository contains the extracted regression training workflow plus the complete app source, rather than a verbatim copy of every Colab cell. Other Colab sections refer to model checkpoints and files that were missing when their app cells ran.
 
 ## Data and model limits
 
