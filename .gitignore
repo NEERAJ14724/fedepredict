@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.server-*.log
+artifacts/
+data/*.csv
+data/*.xlsx
+
