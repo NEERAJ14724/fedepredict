@@ -57,5 +57,5 @@ These APIs provide current weather and ADS-B positions. They do not provide comm
 
 ## Deployment
 
-The project is a self-contained Node web service and can run on a Node hosting service. `PORT` is read from the environment. `render.yaml` defines a Render web service and health check; connect this repository to a Render account and deploy the blueprint to publish it. Public deployment still needs a hosting account and a destination controlled by the project owner.
+The project is a Node web service and can run on a Node hosting service. `PORT` is read from the environment. `render.yaml` defines a Render web service and health check. The live weather and aircraft endpoints can run without the historical CSV; set `DATASET_PATH` to a copy of `data/flight_delay.csv` on the host to enable historical overview and prediction endpoints. Set `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` only if using authenticated OpenSky access.
 
