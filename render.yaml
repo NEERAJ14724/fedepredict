@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fedpredict
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: "npm start"
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+
