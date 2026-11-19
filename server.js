@@ -28,7 +28,9 @@ function loadRows(csv) {
     return row;
   });
 }
-const rows=loadRows(await readFile(resolve(root,'data/flight_delay.csv'),'utf8'));
+const datasetPath=process.env.DATASET_PATH?resolve(process.env.DATASET_PATH):resolve(root,'data/flight_delay.csv');
+let rows=[],datasetError=null;
+try { rows=loadRows(await readFile(datasetPath,'utf8')); } catch { datasetError=`Historical dataset was not found at ${datasetPath}. Set DATASET_PATH or add data/flight_delay.csv.`; console.warn(datasetError); }
 const airports={
   ATL:{name:'Atlanta',lat:33.6407,lon:-84.4277},ORD:{name:'Chicago O’Hare',lat:41.9742,lon:-87.9073},DFW:{name:'Dallas/Fort Worth',lat:32.8998,lon:-97.0403},DEN:{name:'Denver',lat:39.8561,lon:-104.6737},CLT:{name:'Charlotte',lat:35.2144,lon:-80.9473},LAX:{name:'Los Angeles',lat:33.9416,lon:-118.4085},PHX:{name:'Phoenix',lat:33.4342,lon:-112.0116},SEA:{name:'Seattle',lat:47.4502,lon:-122.3088},LAS:{name:'Las Vegas',lat:36.084,lon:-115.1537},IAH:{name:'Houston',lat:29.9902,lon:-95.3368},MCO:{name:'Orlando',lat:28.4312,lon:-81.3081},LGA:{name:'New York LaGuardia',lat:40.7769,lon:-73.874},EWR:{name:'Newark',lat:40.6895,lon:-74.1745},DCA:{name:'Washington Reagan',lat:38.8512,lon:-77.0402},BOS:{name:'Boston',lat:42.3656,lon:-71.0096},DTW:{name:'Detroit',lat:42.2162,lon:-83.3554},SFO:{name:'San Francisco',lat:37.6213,lon:-122.379},MSP:{name:'Minneapolis',lat:44.8848,lon:-93.2223},JFK:{name:'New York JFK',lat:40.6413,lon:-73.7781},SLC:{name:'Salt Lake City',lat:40.7899,lon:-111.9791},PHL:{name:'Philadelphia',lat:39.8744,lon:-75.2424},MIA:{name:'Miami',lat:25.7959,lon:-80.287},BNA:{name:'Nashville',lat:36.1263,lon:-86.6774},BWI:{name:'Baltimore',lat:39.1774,lon:-76.6684}
 };
@@ -61,7 +63,7 @@ async function body(req) { let data=''; for await (const chunk of req) { data+=c
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(req.method==='OPTIONS') {res.writeHead(204,{'access-control-allow-methods':'GET,POST,OPTIONS','access-control-allow-headers':'content-type'});return res.end();}
-  if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{status:'ok',records:rows.length,source:'BTS monthly airline-airport data',years:[...new Set(rows.map(r=>r.year))].sort()});
+  if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{status:'ok',records:rows.length,historicalDataAvailable:rows.length>0,liveApisAvailable:true,source:'BTS monthly airline-airport data',years:[...new Set(rows.map(r=>r.year))].sort()});
   if(req.method==='GET'&&url.pathname==='/api/live/weather') {
     const code=String(url.searchParams.get('airport')||'ATL').trim().toUpperCase(),airport=airports[code];
     if(!airport)return json(res,400,{error:`Choose one of the supported airport codes: ${Object.keys(airports).join(', ')}.`});
@@ -72,8 +74,9 @@ const server=createServer(async(req,res)=>{
     if(!airport)return json(res,400,{error:`Choose one of the supported airport codes: ${Object.keys(airports).join(', ')}.`});
     try {const data=await cachedApi(`aircraft:${code}`,60*1000,async()=>{const delta=.45,q=new URLSearchParams({lamin:String(airport.lat-delta),lomin:String(airport.lon-delta),lamax:String(airport.lat+delta),lomax:String(airport.lon+delta)}),token=await openSkyAuth(),headers=token?{authorization:`Bearer ${token}`}:{},r=await fetch(`https://opensky-network.org/api/states/all?${q}`,{headers,signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error(`OpenSky returned ${r.status}`);const body=await r.json(),states=(body.states||[]).filter(s=>s[5]!=null&&s[6]!=null).slice(0,60).map(s=>({icao24:s[0],callsign:String(s[1]||'').trim(),originCountry:s[2],longitude:s[5],latitude:s[6],altitudeMeters:s[7],onGround:s[8],velocityMetersPerSecond:s[9],headingDegrees:s[10],verticalRateMetersPerSecond:s[11],lastContact:s[4]}));return {count:body.states?.length||0,aircraft:states,time:body.time};});return json(res,200,{airport:code,airportName:airport.name,provider:'OpenSky Network',asOf:new Date(data.time*1000).toISOString(),aircraftCount:data.count,aircraft:data.aircraft,notice:'Live aircraft positions only; OpenSky does not provide commercial flight schedules or delay status.'});}catch(e){const status=String(e.message).match(/returned (\d+)/)?.[1];return json(res,502,{error:status==='429'?'OpenSky rate limit reached. Wait a few minutes, then retry.':'Live aircraft data is temporarily unavailable. OpenSky may require client credentials or have rate limits.'});}
   }
-  if(req.method==='GET'&&url.pathname==='/api/overview') return json(res,200,overview());
+  if(req.method==='GET'&&url.pathname==='/api/overview') {if(datasetError)return json(res,503,{error:datasetError});return json(res,200,overview());}
   if(req.method==='POST'&&url.pathname==='/api/predict') {
+    if(datasetError)return json(res,503,{error:datasetError});
     try {
       const input=JSON.parse(await body(req)), month=Number(input.month), airline=String(input.airline||'').slice(0,120), airport=String(input.airport||'').slice(0,120);
       if(!Number.isInteger(month)||month<1||month>12) return json(res,400,{error:'Choose a valid flight month.'});
