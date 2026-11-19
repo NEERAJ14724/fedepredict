@@ -22,6 +22,7 @@ Open `http://localhost:3000`. Set `PORT` to use a different port.
 - Shows dataset counts, a month-of-year delay rate, and high-volume airports.
 - Estimates historical delay probability for a selected month and optional airline/airport. Delay probability is based on arrivals delayed 15+ minutes divided by arriving flights. Average minutes is total arrival delay divided by arrivals.
 - Exposes a JSON prediction endpoint at `POST /api/predict` and dataset metadata at `GET /api/overview`.
+- Connects to Open-Meteo for live airport weather and OpenSky Network for nearby aircraft positions through server-side API routes (`GET /api/live/weather?airport=ATL`, `GET /api/live/aircraft?airport=ATL`).
 - Lets a demo client submit aggregate sample count, delay probability, and mean delay minutes. The server combines those values using sample-weighted averaging and serves the current snapshot at `GET /api/federated/model`.
 - Includes a `render.yaml` service blueprint and a sample client update JSON file.
 
@@ -47,6 +48,12 @@ The Colab itself contains many repeated experiments and app cells. A full `.ipyn
 The dataset has 98,578 monthly airline-airport records (2021–2025), not flight-level observations or a live feed. The estimate is retrospective and monthly; it cannot predict an individual flight or use current weather, ATC, aircraft rotation, or live status. The interactive federated step demonstrates weighted averaging of client summaries. It does not implement a trained LSTM-GCN, secure aggregation, differential privacy, or production client authentication. Demo model updates live in process memory and reset when the server restarts.
 
 The source dataset is the BTS Airline Delay Cause data supplied with the project. The app does not expose the CSV as a static download, and the raw workbook/CSV is not committed to this repository.
+
+## Live API feeds
+
+The app proxies requests through its Node server so browser clients do not call third-party APIs directly. Open-Meteo current conditions require no key for non-commercial use; attribution is shown in the app. OpenSky aircraft positions use the public REST API with anonymous access when no credentials are configured. For an OpenSky account, set `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` in the hosting service environment to use OAuth client credentials; never put these values in browser code or commit them. OpenSky access is rate-limited and its data is intended for research and non-commercial use.
+
+These APIs provide current weather and ADS-B positions. They do not provide commercial airline delay status, schedules, or flight-specific delay predictions. The historical BTS model remains separate and does not use these live API values as features.
 
 ## Deployment
 
